@@ -1,0 +1,8 @@
+#namespace: examples
+
+resources:
+- ../base
+
+namePrefix: dev-
+
+patchesStrategicMerge: []

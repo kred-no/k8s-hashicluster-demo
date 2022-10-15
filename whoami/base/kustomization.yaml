@@ -1,0 +1,16 @@
+resources:
+- namespace.yaml
+
+namespace: kredno
+
+helmGlobals: {}
+helmCharts:
+- name: whoami
+  repo: https://cowboysysop.github.io/charts/
+  version: v2.7.0
+  releaseName: x
+#  namespace: cert-manager
+#  valuesInline: {}
+#  valuesFile: ""
+#  valuesMerge: ""
+#  includeCRDs: false
