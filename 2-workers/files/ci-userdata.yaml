@@ -1,0 +1,140 @@
+timezone: Europe/Oslo
+ntp:
+  enabled: true
+keyboard:
+  layout: 'no'
+package_update: true
+package_upgrade: true
+packages:
+- unzip
+- curl
+- dnsutils
+users:
+- name: default
+- name: hashicorp
+  gecos: Hashicorp System User
+  system: true
+  shell: /usr/sbin/nologin
+- name: consul
+  gecos: Consul System User
+  system: true
+  shell: /usr/sbin/nologin
+- name: nomad
+  gecos: Nomad System User
+  system: true
+  shell: /usr/sbin/nologin
+disk_setup:
+  ephemeral0:
+    table_type: gpt
+    layout: true
+    overwrite: true
+fs_setup:
+- device: ephemeral0.1
+  filesystem: ext4
+write_files:
+- path: /etc/systemd/system/consul.service
+  content: |
+    [Unit]
+      Description="HashiCorp Consul - A service mesh solution"
+      Documentation=https://developer.hashicorp.com/consul/docs
+      RequiresMountsFor=/usr/local/bin/
+      Wants=network-online.target
+      After=network-online.target
+      ConditionDirectoryNotEmpty=/etc/consul.d/
+      StartLimitBurst=5
+      StartLimitIntervalSec=10s
+    [Service]
+      User=root
+      Group=root
+      EnvironmentFile=-/etc/consul.d/.env
+      ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d/ -data-dir=/var/lib/consul/
+      ExecReload=/bin/kill --signal HUP $MAINPID
+      KillMode=process
+      KillSignal=SIGTERM
+      Restart=on-failure
+      LimitNOFILE=65536
+    [Install]
+      WantedBy=multi-user.target
+  owner: root:root
+  permissions: '0755'
+- path: /etc/systemd/system/nomad.service
+  content: |
+    [Unit]
+      Description="HashiCorp Nomad - A flexible scheduler solution"
+      Documentation=https://developer.hashicorp.com/nomad/docs
+      Wants=network-online.target
+      After=network-online.target
+      Wants=consul.service
+      After=consul.service
+      ConditionDirectoryNotEmpty=/etc/nomad.d/
+      StartLimitBurst=5
+      StartLimitIntervalSec=10s
+    [Service]
+      User=root
+      Group=root
+      EnvironmentFile=-/etc/nomad.d/.env
+      ExecReload=/bin/kill -HUP $MAINPID
+      ExecStart=/usr/local/bin/nomad agent -config=/etc/nomad.d -data-dir=/var/lib/nomad/
+      KillMode=process
+      KillSignal=SIGINT
+      LimitNOFILE=65536
+      LimitNPROC=infinity
+      Restart=on-failure
+      RestartSec=2
+      TasksMax=infinity
+      OOMScoreAdjust=-1000
+    [Install]
+      WantedBy=multi-user.target
+  owner: root:root
+  permissions: '0755'
+- path: /etc/consul.d/client.hcl
+  content: |
+    server = false
+    log_level = "INFO"
+    datacenter = "dc1"
+    bind_addr = "0.0.0.0"
+    advertise_addr = "{{ GetInterfaceIP \"^eth\" }}"
+    retry_join = [
+      "provider=\"k8s\" label_selector=\"app=consul,component=server\" namespace=\"consul\" host_network=\"true\"",
+    ]
+    auto_encrypt {
+      tls = true
+    }
+    encrypt = "l053HqQ9BRGB30vwg29n1m0Sp1ZYMXyw1e8WuC9Y0tc="
+    acl {
+      enabled = true
+      tokens {
+        default = "efb39f6b-b4fb-d041-02b1-24b0bedee858"
+      }
+    }
+    ports {
+      grpc = 8502
+    }
+    leave_on_terminate = true
+  owner: root:root
+  permissions: '0640'
+- path: /etc/nomad.d/client.hcl
+  content: |
+    bind_addr = "0.0.0.0"
+    client {
+      enabled = true
+    }
+    consul {
+      token = "efb39f6b-b4fb-d041-02b1-24b0bedee858"
+    }
+    plugin "raw_exec" {
+      config {
+        enabled = true
+      }
+    }
+    plugin "docker" {
+      config {
+        allow_privileged = true
+        volumes {
+          enabled = true
+        }
+      }
+    }
+  owner: root:root
+  permissions: '0640'
+runcmd: []

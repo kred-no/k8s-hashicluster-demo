@@ -1,0 +1,56 @@
+global:
+  enable: true
+  tlsDisable: false
+
+ui:
+  enabled: true
+  serviceType: ClusterIP
+  #serviceNodePort: 30000
+
+server:
+  standalone:
+    enabled: true
+    config: |
+      ui = true
+      listener "tcp" {
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+        tls_disable        = 0
+        tls_client_ca_file = "/vault/tls/ca.crt"
+        tls_cert_file      = "/vault/tls/tls.crt"
+        tls_key_file       = "/vault/tls/tls.key"
+      }
+      storage "raft" {
+        path = "/vault/data"
+      }
+  #extraArgs: "-config=/vault/userconfig/server.hcl"
+  
+  extraEnvironmentVars:
+    VAULT_CACERT: /vault/tls/ca.crt
+  
+  volumes:
+  - name: usersecret
+    secret:
+      secretName: usersecret
+      defaultMode: 420
+  
+  volumeMounts:
+  - name: usersecret
+    mountPath: /vault/tls
+    readOnly: true
+  
+  dataStorage:
+    enabled: true
+    size: 10Gi
+  
+  auditStorage:
+    enabled: false
+    size: 10Gi
+
+  resources:
+    requests:
+      memory: 150Mi
+      cpu: 200m
+    limits:
+      memory: 300Mi
+      cpu: 300m
