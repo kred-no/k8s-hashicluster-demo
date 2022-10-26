@@ -1,0 +1,48 @@
+# # https://github.com/hashicorp/consul-k8s/blob/v1.0.0-beta3/charts/consul/values.yaml
+global:
+  enabled: true
+  name: consul
+  datacenter: dc1
+  failurePolicy: Ignore
+  gossipEncryption:
+    autoGenerate: true
+  tls:
+    enabled: true
+    verify: false
+    httpsOnly: false
+    enableAutoEncrypt: true
+  acls:
+    manageSystemACLs: true
+    createReplicationToken: true
+
+server:
+  enabled: true
+  replicas: 1
+  connect: true
+  exposeGossipAndRPCPorts: true
+  storage: 5Gi
+
+client:
+  enabled: false # Should no longer be required
+
+ui:
+  enabled: true
+  service:
+    type: ClusterIP
+
+controller:
+  enabled: true
+  replicas: 1
+
+connectInject:
+  enabled: false
+  replicas: 1
+  default: false
+
+# Use w/traefik++
+syncCatalog:
+  enabled: false
+  default: false
+  toConsul: true
+  toK8s: false
+  consulPrefix: k8s-

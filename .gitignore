@@ -5,19 +5,24 @@
 
 # Terraform
 **/.terraform/*
+**/.statefiles/*
 
 .terraform.lock.hcl
-
 *.tfstate
 *.tfstate.*
-
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
-
 *.auto.tfvars
+
+# Waypoint 
+**/.waypoint/*
+
+# Vagrant
+**/.vagrant/*
 
 # Common
 crash.log
 *.pem
+id_*
