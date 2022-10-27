@@ -1,0 +1,63 @@
+- name: CNI-Plugins
+  hosts: 127.0.0.1
+  connection: local
+  become: true
+
+  vars:
+    base_url: https://github.com/containernetworking/plugins/releases/download
+    app: cni-plugins
+    version: '1.1.1'
+
+  tasks:
+  -
+    name: CNI | Folder
+    ansible.builtin.file:
+      path: /opt/cni/bin
+      owner: root
+      group: root
+      mode: '0755'
+      state: directory
+  -
+    name: CNI | Download
+    ansible.builtin.get_url:
+      url: "{{ base_url }}/v{{  version }}/{{ app }}-linux-amd64-v{{  version }}.tgz"
+      checksum: "sha1:{{ base_url }}/v{{ version }}/{{ app }}-linux-amd64-v{{ version }}.tgz.sha1"
+      dest: "/tmp/{{ app }}-v{{ version }}.tgz"
+      mode: '0644'
+      timeout: 300
+    register: dl_result
+    until: dl_result is succeeded
+  -
+    name: Create a directory if it does not exist
+    ansible.builtin.file:
+      path: /opt/cni/bin
+      state: directory
+      mode: '0755'
+  -
+    name: CNI | Unarchive
+    ansible.builtin.unarchive:
+      src: "{{ dl_result.dest }}"
+      dest: /opt/cni/bin
+      owner: root
+      group: root
+      mode: '0755'
+  -
+    name: CNI | Config
+    block:
+    -
+      name: CNI | Bridge
+      community.general.modprobe:
+        name: br_netfilter
+        state: present
+    -
+      name: CNI | Bridge Config
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value | default('1') }}"
+        state: "{{ item.state | default('present') }}"
+        sysctl_file: /etc/sysctl.d/50-cni-plugins.conf
+        reload: true
+      loop:
+      - name: net.bridge.bridge-nf-call-arptables
+      - name: net.bridge.bridge-nf-call-ip6tables
+      - name: net.bridge.bridge-nf-call-iptables

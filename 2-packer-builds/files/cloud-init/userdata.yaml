@@ -1,0 +1,18 @@
+#cloud-config
+timezone: Europe/Oslo
+
+ntp:
+  enabled: true
+
+keyboard:
+  layout: 'no'
+
+disk_setup:
+  ephemeral0:
+    table_type: gpt
+    layout: true
+    overwrite: true
+
+fs_setup:
+- device: ephemeral0.1
+  filesystem: ext4

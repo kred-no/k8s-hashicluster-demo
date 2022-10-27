@@ -1,0 +1,21 @@
+[Unit]
+  Description="HashiCorp Consul - A service mesh solution"
+  Documentation=https://developer.hashicorp.com/consul/docs
+  RequiresMountsFor=/usr/local/bin/
+  Wants=network-online.target
+  After=network-online.target
+  ConditionDirectoryNotEmpty=/etc/consul.d/
+  StartLimitBurst=5
+  StartLimitIntervalSec=10s
+[Service]
+  User=root
+  Group=root
+  EnvironmentFile=-/etc/consul.d/.env
+  ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d/ -data-dir=/var/lib/consul/
+  ExecReload=/bin/kill --signal HUP $MAINPID
+  KillMode=process
+  KillSignal=SIGTERM
+  Restart=on-failure
+  LimitNOFILE=65536
+[Install]
+  WantedBy=multi-user.target

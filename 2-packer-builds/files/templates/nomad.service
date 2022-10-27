@@ -1,0 +1,26 @@
+[Unit]
+  Description="HashiCorp Nomad - A flexible scheduler solution"
+  Documentation=https://developer.hashicorp.com/nomad/docs
+  Wants=network-online.target
+  After=network-online.target
+  Wants=consul.service
+  After=consul.service
+  ConditionDirectoryNotEmpty=/etc/nomad.d/
+  StartLimitBurst=5
+  StartLimitIntervalSec=10s
+[Service]
+  User=root
+  Group=root
+  EnvironmentFile=-/etc/nomad.d/.env
+  ExecReload=/bin/kill -HUP $MAINPID
+  ExecStart=/usr/local/bin/nomad agent -config=/etc/nomad.d -data-dir=/var/lib/nomad/
+  KillMode=process
+  KillSignal=SIGINT
+  LimitNOFILE=65536
+  LimitNPROC=infinity
+  Restart=on-failure
+  RestartSec=2
+  TasksMax=infinity
+  OOMScoreAdjust=-1000
+[Install]
+  WantedBy=multi-user.target

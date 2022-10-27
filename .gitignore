@@ -16,6 +16,9 @@ override.tf.json
 *_override.tf.json
 *.auto.tfvars
 
+# Packer
+*.pkrvars.hcl
+
 # Waypoint 
 **/.waypoint/*
 

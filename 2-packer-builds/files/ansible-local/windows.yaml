@@ -1,0 +1,11 @@
+- hosts: all
+  remote_user: Administrator
+  gather_facts: false
+
+  tasks:
+  - name: Install required packages
+    win_chocolatey:
+      name:
+      - nscp
+      - prometheus-wmi-exporter.install
+      - openssh

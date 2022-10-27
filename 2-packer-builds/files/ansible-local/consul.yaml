@@ -1,0 +1,41 @@
+- name: Consul
+  hosts: 127.0.0.1
+  connection: local
+  become: true
+
+  vars:
+    base_url: https://releases.hashicorp.com
+    app: consul
+    version: '1.14.0-beta1'
+  
+  tasks:
+  -
+    name: Install OS Packages
+    ansible.builtin.package:
+      name:
+      - curl
+      - unzip
+      state: present
+  -
+    name: Download
+    ansible.builtin.get_url:
+      url: "{{ base_url }}/{{ app }}/{{ version }}/{{ app }}_{{ version }}_linux_amd64.zip"
+      checksum: "sha256:{{ base_url }}/{{ app }}/{{ version }}/{{ app }}_{{ version }}_SHA256SUMS"
+      dest: "/tmp/nomad.zip"
+      mode: '0644'
+      timeout: 300
+    register: dl_status
+    until: dl_status is succeeded
+    notify: unarchive
+  -
+    ansible.builtin.meta: flush_handlers
+  
+  handlers:
+  -
+    name: unarchive
+    ansible.builtin.unarchive:
+      src: "{{ dl_status.dest }}"
+      dest: /usr/local/bin/
+      mode: 0755
+      owner: root
+      group: root
